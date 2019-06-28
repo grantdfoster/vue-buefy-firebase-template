@@ -1,6 +1,6 @@
 {
   "projects": {
-    "development": "planman-development",
-    "production": "planman-production"
+    "development": "<put your firebase development project here>",
+    "production": "<put your firebase production project here>"
   }
 }

@@ -1,6 +1,6 @@
 {
   "rules": {
-    ".write": "auth.token.email.matches(/.*@wework.com$/)",
-    ".read": "auth.token.email.matches(/.*@wework.com$/)"
+    ".write": "auth != null",
+    ".read": "auth != null"
   }
 }
