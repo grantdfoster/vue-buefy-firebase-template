@@ -24,14 +24,18 @@ export default {
     };
   },
   mounted() {
-    var This = this;
+    const This = this;
     firebase.auth().onAuthStateChanged(user => {
       if (user) {
-        This.authorize(user.email)
-          .then(() => This.continue())
+        this.authorize(user)
+          .then(() => {
+            This.$store
+              .dispatch("updateUser", user)
+              .then(() => This.continue());
+          })
           .catch(domain => {
-            This.flashMessage(`${domain} is now allowed!`, "is-danger");
-            This.isLoading = false;
+            this.flashMessage(`${domain} is not allowed!`, "is-danger");
+            firebase.auth().signOut();
           });
       } else {
         this.isLoading = false;
@@ -42,14 +46,15 @@ export default {
     continue() {
       this.$router.push("/home");
     },
-    authorize(email) {
+    authorize(user) {
       return new Promise((resolve, reject) => {
         const allowedDomains = ["wework.com"];
-        const domain = email.split("@")[1];
+        const domain = user.email.split("@")[1];
         allowedDomains.includes(domain) ? resolve() : reject(domain);
       });
     },
     signIn() {
+      this.isLoading = true;
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.setCustomParameters({
         prompt: "select_account"
@@ -57,15 +62,6 @@ export default {
       firebase
         .auth()
         .signInWithPopup(provider)
-        .then(result => {
-          // const token = result.credential.accessToken;
-          const user = result.user;
-          this.authorize(user.email)
-            .then(() => this.continue())
-            .catch(domain =>
-              this.flashMessage(`${domain} is now allowed!`, "is-danger")
-            );
-        })
         .catch(error => {
           const errorMessage = JSON.parse(error.message);
           this.flashMessage(

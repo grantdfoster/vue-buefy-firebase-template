@@ -1,6 +1,6 @@
 {
   "projects": {
-    "development": "<put your firebase development project here>",
-    "production": "<put your firebase production project here>"
+    "development": "<firebase development name here>",
+    "production": "<firebase production name here>"
   }
 }
