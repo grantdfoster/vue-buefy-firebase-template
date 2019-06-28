@@ -1,0 +1,157 @@
+version: 2
+jobs:
+  run-tests:
+    docker:
+      - image: circleci/node:10.1
+
+    # set working directory
+    working_directory: ~/repo
+    
+    # specify steps for build job
+    steps:
+
+      # checkout codebase
+      - checkout
+
+      # download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      # install yarn packages
+      - run:
+          name: "Install Packages"
+          command: yarn install
+
+      # cache node modules for faster builds
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
+      # run unit tests
+      - run:
+          name: "Run Unit Tests"
+          command: yarn test:unit
+
+      # run end to end tests
+      # - run:
+      #     name: "Run End To End Tests"
+      #     command: yarn test:e2e
+
+  development-release:
+    docker:
+      - image: circleci/node:10.1
+
+    # set working directory
+    working_directory: ~/repo
+    
+    # specify steps for build job
+    steps:
+
+      # checkout codebase
+      - checkout
+
+      # download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      # install yarn packages
+      - run:
+          name: "Install Packages"
+          command: yarn install
+
+      # cache node modules for faster builds
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+          
+      # run unit tests
+      - run:
+          name: "Run Unit Tests"
+          command: yarn test:unit
+
+      # run end to end tests
+      # - run:
+      #     name: "Run End To End Tests"
+      #     command: yarn test:e2e
+        
+      # build and release web application
+      - run:
+          name: "Build and Deploy Firebase Hosting & Database"
+          command: |
+            yarn build
+            sudo npm install -g firebase-tools
+            firebase use development
+            firebase deploy --only hosting,database --token=$FIREBASE_TOKEN --non-interactive
+
+  production-release:
+    docker:
+      - image: circleci/node:10.1
+
+    # set working directory
+    working_directory: ~/repo
+    
+    # specify steps for build job
+    steps:
+
+      # checkout codebase
+      - checkout
+
+      # download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      # install yarn packages
+      - run:
+          name: "Install Packages"
+          command: yarn install
+
+      # cache node modules for faster builds
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+        
+      # build and release web application
+      - run:
+          name: "Build and Deploy Firebase Hosting & Database"
+          command: |
+            yarn build
+            sudo npm install -g firebase-tools
+            firebase use production
+            firebase deploy --only hosting,database --token=$FIREBASE_TOKEN --non-interactive
+
+workflows:
+  version: 2
+  production-release:
+    jobs:
+      - production-release:
+          filters:
+            branches:
+              only:
+                - master
+  development-release:
+    jobs:
+      - development-release:
+          filters:
+            branches:
+              only:
+                - development
+  run-tests:
+    jobs:
+      - run-tests:
+          filters:
+            branches:
+              ignore:
+                - development
+                - master

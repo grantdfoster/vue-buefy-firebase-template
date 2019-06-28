@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "development": "planman-development",
+    "production": "planman-production"
+  }
+}
